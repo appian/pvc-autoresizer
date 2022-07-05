@@ -11,7 +11,7 @@ COPY metrics/ metrics/
 COPY runners/ runners/
 COPY cmd/ cmd/
 
-# Build
+# Build #
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -a -o pvc-autoresizer main.go
 
 # Stage2: setup runtime container
