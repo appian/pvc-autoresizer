@@ -444,6 +444,9 @@ var _ = Describe("test resizer", func() {
 		namespace := "default"
 		isController := true
 		stsReplicas := int32(1)
+		stsSelector := metav1.LabelSelector{
+			MatchLabels: map[string]string{},
+		}
 		testCases := []testCase{
 			{
 				existingPersistentVolumeClaims: []corev1.PersistentVolumeClaim{
@@ -472,6 +475,7 @@ var _ = Describe("test resizer", func() {
 						},
 						Spec: appsv1.StatefulSetSpec{
 							Replicas: &stsReplicas,
+							Selector: &stsSelector,
 							VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 								{
 									ObjectMeta: metav1.ObjectMeta{
