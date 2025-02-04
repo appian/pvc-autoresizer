@@ -515,7 +515,7 @@ var _ = Describe("test resizer", func() {
 					Expect(err).NotTo(HaveOccurred())
 
 					var pvcs corev1.PersistentVolumeClaimList
-					err = k8sClient.List(ctx, &pvcs)
+					k8sClient.List(ctx, &pvcs)
 					Expect(pvcs.Items).To(BeEmpty())
 					Expect(pvcs.Items).NotTo(BeEmpty())
 
