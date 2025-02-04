@@ -445,7 +445,9 @@ var _ = Describe("test resizer", func() {
 		isController := true
 		stsReplicas := int32(1)
 		stsSelector := metav1.LabelSelector{
-			MatchLabels: map[string]string{},
+			MatchLabels: map[string]string{
+				"test": "test",
+			},
 		}
 		testCases := []testCase{
 			{
