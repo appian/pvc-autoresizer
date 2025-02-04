@@ -523,6 +523,7 @@ var _ = Describe("test resizer", func() {
 
 					var pods corev1.PodList
 					err = k8sClient.List(ctx, &pods)
+					Expect(err).NotTo(HaveOccurred())
 					Expect(pods.Items).To(BeEmpty())
 					Expect(pods.Items).NotTo(BeEmpty())
 
