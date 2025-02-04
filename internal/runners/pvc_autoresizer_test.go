@@ -436,6 +436,11 @@ var _ = Describe("test resizer", func() {
 		ctx := context.Background()
 		volumeMode := corev1.PersistentVolumeFilesystem
 		pvcSpec := corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: *resource.NewQuantity(1<<30, resource.BinarySI),
+				},
+			},
 			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			StorageClassName: &scName,
 			VolumeMode:       &volumeMode,
@@ -462,6 +467,8 @@ var _ = Describe("test resizer", func() {
 									Kind:       ownerReferenceKind,
 									Name:       "test",
 									Controller: &isController,
+									APIVersion: "v1",
+									UID:        "test",
 								},
 							},
 						},
