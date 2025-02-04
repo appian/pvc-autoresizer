@@ -509,23 +509,12 @@ var _ = Describe("test resizer", func() {
 			namespace := "default"
 			It(description, func() {
 				createSTS(ctx, &testCase.statefulSets[0])
+				createDefinedPVC(ctx, &testCase.existingPersistentVolumeClaims[0])
 				By("creating sts", func() {
 					var err error
 					var sts appsv1.StatefulSet
 					err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts"}, &sts)
 					Expect(err).NotTo(HaveOccurred())
-
-					var pvcs corev1.PersistentVolumeClaimList
-					err = k8sClient.List(ctx, &pvcs)
-					Expect(err).NotTo(HaveOccurred())
-					//Expect(pvcs.Items).To(BeEmpty())
-					//Expect(pvcs.Items).NotTo(BeEmpty())
-
-					var pods corev1.PodList
-					err = k8sClient.List(ctx, &pods)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(pods.Items).To(BeEmpty())
-					Expect(pods.Items).NotTo(BeEmpty())
 
 					var pvc corev1.PersistentVolumeClaim
 					err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts-test-pvc-0"}, &pvc)
@@ -598,5 +587,10 @@ func setMetrics(ns, name string, availableBytes, capacityBytes, availableInodeSi
 
 func createSTS(ctx context.Context, sts *appsv1.StatefulSet) {
 	err := k8sClient.Create(ctx, sts)
+	Expect(err).NotTo(HaveOccurred())
+}
+
+func createDefinedPVC(ctx context.Context, pvc *corev1.PersistentVolumeClaim) {
+	err := k8sClient.Create(ctx, pvc)
 	Expect(err).NotTo(HaveOccurred())
 }
