@@ -512,7 +512,11 @@ var _ = Describe("test resizer", func() {
 				By("creating sts", func() {
 					var sts appsv1.StatefulSet
 					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts"}, &sts)
-					Expect(err).To(HaveOccurred())
+					Expect(err).NotTo(HaveOccurred())
+
+					var pvc corev1.PersistentVolumeClaim
+					err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts-test-pvc-0"}, &pvc)
+					Expect(err).NotTo(HaveOccurred())
 				})
 			})
 		}
