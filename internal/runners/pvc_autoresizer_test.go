@@ -459,7 +459,7 @@ var _ = Describe("test resizer", func() {
 				existingPersistentVolumeClaims: []corev1.PersistentVolumeClaim{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:        "test",
+							Name:        "test-sts-test-pvc-0",
 							Namespace:   namespace,
 							Annotations: map[string]string{},
 							OwnerReferences: []metav1.OwnerReference{
