@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -11,13 +12,16 @@ import (
 	"github.com/go-logr/logr"
 	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -84,6 +88,60 @@ func isTargetPVC(pvc *corev1.PersistentVolumeClaim) (bool, error) {
 	return true, nil
 }
 
+func (w *pvcAutoresizer) getPVCOwnerSTS(ctx context.Context, pvc *corev1.PersistentVolumeClaim) *appsv1.StatefulSet {
+	if !controllerutil.HasControllerReference(pvc) {
+		return nil
+	}
+
+	owner := metav1.GetControllerOf(pvc)
+	if owner == nil || owner.Kind != "StatefulSet" {
+		return nil
+	}
+
+	key := client.ObjectKey{
+		Namespace: pvc.Namespace,
+		Name:      owner.Name,
+	}
+
+	var sts appsv1.StatefulSet
+	err := w.client.Get(ctx, key, &sts)
+	if err != nil {
+		return nil
+	}
+
+	return &sts
+}
+
+func (w *pvcAutoresizer) reconcileAnnotations(pvc *corev1.PersistentVolumeClaim, sts *appsv1.StatefulSet) {
+	if enabledAnnotation, ok := sts.Annotations[pvcautoresizer.AnnotationPatchingEnabled]; !ok || enabledAnnotation != "true" {
+		return
+	}
+
+	autoresizerAnnotationRegex, err := regexp.Compile(pvcautoresizer.AutoResizerAnnotationPrefix + ".+")
+	if err != nil {
+		return
+	}
+
+	for _, pvcTemplate := range sts.Spec.VolumeClaimTemplates {
+		pvcNameRegex, err := regexp.Compile(pvcTemplate.Name + "-" + sts.Name + "-\\d+")
+		if err != nil {
+			continue
+		}
+
+		if !pvcNameRegex.MatchString(pvc.Name) {
+			continue
+		}
+
+		for annotation, annotationValue := range pvcTemplate.Annotations {
+			if !autoresizerAnnotationRegex.MatchString(annotation) {
+				continue
+			}
+
+			pvc.Annotations[annotation] = annotationValue
+		}
+	}
+}
+
 func (w *pvcAutoresizer) getStorageClassList(ctx context.Context) (*storagev1.StorageClassList, error) {
 	var scs storagev1.StorageClassList
 	err := w.client.List(ctx, &scs, client.MatchingFields(map[string]string{resizeEnableIndexKey: "true"}))
@@ -117,6 +175,13 @@ func (w *pvcAutoresizer) reconcile(ctx context.Context) {
 		}
 		for _, pvc := range pvcs.Items {
 			log := w.log.WithValues("namespace", pvc.Namespace, "name", pvc.Name)
+			// check owner ref on PVC and if it is a STS check STS for enable annotation
+			// if found, make sure the PVC annotations are up-to-date with PVC spec
+			sts := w.getPVCOwnerSTS(ctx, &pvc)
+			if sts != nil {
+				w.reconcileAnnotations(&pvc, sts)
+			}
+
 			isTarget, err := isTargetPVC(&pvc)
 			if err != nil {
 				metrics.ResizerFailedResizeTotal.Increment(pvc.Name, pvc.Namespace)

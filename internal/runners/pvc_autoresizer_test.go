@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	pvcautoresizer "github.com/topolvm/pvc-autoresizer"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -425,6 +426,82 @@ var _ = Describe("test resizer", func() {
 			})
 		})
 	})
+
+	Context("annotate", func() {
+		type testCase struct {
+			existingPersistentVolumeClaims []corev1.PersistentVolumeClaim
+			statefulSets                   []appsv1.StatefulSet
+			expectedPVCAnnotations         map[string]string
+		}
+		ctx := context.Background()
+		volumeMode := corev1.PersistentVolumeFilesystem
+		pvcSpec := corev1.PersistentVolumeClaimSpec{
+			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			StorageClassName: &scName,
+			VolumeMode:       &volumeMode,
+		}
+		ownerReferenceKind := "StatefulSet"
+		namespace := "default"
+		isController := true
+		stsReplicas := int32(1)
+		testCases := []testCase{
+			{
+				existingPersistentVolumeClaims: []corev1.PersistentVolumeClaim{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "test",
+							Namespace:   namespace,
+							Annotations: map[string]string{},
+							OwnerReferences: []metav1.OwnerReference{
+								{
+									Kind:       ownerReferenceKind,
+									Name:       "test",
+									Controller: &isController,
+								},
+							},
+						},
+						Spec: pvcSpec,
+					},
+				},
+				statefulSets: []appsv1.StatefulSet{
+					{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        "test-sts",
+							Namespace:   namespace,
+							Annotations: map[string]string{},
+						},
+						Spec: appsv1.StatefulSetSpec{
+							Replicas: &stsReplicas,
+							VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
+								{
+									ObjectMeta: metav1.ObjectMeta{
+										Name:        "test-pvc",
+										Namespace:   namespace,
+										Annotations: map[string]string{},
+									},
+									Spec: pvcSpec,
+								},
+							},
+						},
+					},
+				},
+				expectedPVCAnnotations: map[string]string{},
+			},
+		}
+
+		for _, testCase := range testCases {
+			description := "Test"
+			namespace := "default"
+			It(description, func() {
+				createSTS(ctx, &testCase.statefulSets[0])
+				By("creating sts", func() {
+					var sts appsv1.StatefulSet
+					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts"}, &sts)
+					Expect(err).NotTo(HaveOccurred())
+				})
+			})
+		}
+	})
 })
 
 func createPVC(ctx context.Context, ns, name, scName, threshold, inodesThreshold, increase string,
@@ -485,4 +562,9 @@ func setMetrics(ns, name string, availableBytes, capacityBytes, availableInodeSi
 		AvailableInodeSize: availableInodeSize,
 		CapacityInodeSize:  capacityInodeSize,
 	})
+}
+
+func createSTS(ctx context.Context, sts *appsv1.StatefulSet) {
+	err := k8sClient.Create(ctx, sts)
+	Expect(err).NotTo(HaveOccurred())
 }
