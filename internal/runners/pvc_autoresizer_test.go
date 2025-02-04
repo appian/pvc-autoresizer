@@ -518,8 +518,13 @@ var _ = Describe("test resizer", func() {
 					var pvcs corev1.PersistentVolumeClaimList
 					err = k8sClient.List(ctx, &pvcs)
 					Expect(err).NotTo(HaveOccurred())
-					Expect(pvcs.Items).To(BeEmpty())
-					Expect(pvcs.Items).NotTo(BeEmpty())
+					//Expect(pvcs.Items).To(BeEmpty())
+					//Expect(pvcs.Items).NotTo(BeEmpty())
+
+					var pods corev1.PodList
+					err = k8sClient.List(ctx, &pods)
+					Expect(pods.Items).To(BeEmpty())
+					Expect(pods.Items).NotTo(BeEmpty())
 
 					var pvc corev1.PersistentVolumeClaim
 					err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts-test-pvc-0"}, &pvc)
