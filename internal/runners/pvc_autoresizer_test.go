@@ -510,12 +510,14 @@ var _ = Describe("test resizer", func() {
 			It(description, func() {
 				createSTS(ctx, &testCase.statefulSets[0])
 				By("creating sts", func() {
+					var err error
 					var sts appsv1.StatefulSet
-					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts"}, &sts)
+					err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts"}, &sts)
 					Expect(err).NotTo(HaveOccurred())
 
 					var pvcs corev1.PersistentVolumeClaimList
-					k8sClient.List(ctx, &pvcs)
+					err = k8sClient.List(ctx, &pvcs)
+					Expect(err).NotTo(HaveOccurred())
 					Expect(pvcs.Items).To(BeEmpty())
 					Expect(pvcs.Items).NotTo(BeEmpty())
 
