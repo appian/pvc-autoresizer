@@ -478,6 +478,15 @@ var _ = Describe("test resizer", func() {
 						Spec: appsv1.StatefulSetSpec{
 							Replicas: &stsReplicas,
 							Selector: &stsSelector,
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Name:      "test-pod",
+									Namespace: namespace,
+									Labels: map[string]string{
+										"test": "test",
+									},
+								},
+							},
 							VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 								{
 									ObjectMeta: metav1.ObjectMeta{
