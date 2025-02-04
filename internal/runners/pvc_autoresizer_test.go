@@ -514,6 +514,11 @@ var _ = Describe("test resizer", func() {
 					err := k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts"}, &sts)
 					Expect(err).NotTo(HaveOccurred())
 
+					var pvcs corev1.PersistentVolumeClaimList
+					err = k8sClient.List(ctx, &pvcs)
+					Expect(pvcs.Items).To(BeEmpty())
+					Expect(pvcs.Items).NotTo(BeEmpty())
+
 					var pvc corev1.PersistentVolumeClaim
 					err = k8sClient.Get(ctx, types.NamespacedName{Namespace: namespace, Name: "test-sts-test-pvc-0"}, &pvc)
 					Expect(err).NotTo(HaveOccurred())
