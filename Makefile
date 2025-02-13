@@ -18,7 +18,7 @@ GHALINT = $(BINDIR)/ghalint
 ZIZMOR = $(BINDIR)/zizmor
 
 IMAGE_TAG ?= latest
-IMAGE_PREFIX ?= ghcr.io/topolvm/
+IMAGE_PREFIX ?= ghcr.io/appian/
 GOPROXY ?= $(shell go env GOPROXY)
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.

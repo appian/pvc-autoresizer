@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -50,9 +51,12 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 		return nil, err
 	}
 
-	nodeNames := make([]string, len(nodes.Items))
-	for i, node := range nodes.Items {
-		nodeNames[i] = node.Name
+	nodeNames := make([]string, 0, len(nodes.Items))
+	for _, node := range nodes.Items {
+		if !IsNodeReady(node) {
+			continue
+		}
+		nodeNames = append(nodeNames, node.Name)
 	}
 
 	return gatherFromNodes(ctx, c.log, nodeNames, func(ctx context.Context, nodeName string) (map[types.NamespacedName]*VolumeStats, error) {
@@ -178,4 +182,13 @@ func parseMetric(m *dto.Metric) (pvcName types.NamespacedName, value uint64) {
 	}
 	value = uint64(m.GetGauge().GetValue())
 	return pvcName, value
+}
+
+func IsNodeReady(node corev1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == corev1.NodeReady {
+			return condition.Status == corev1.ConditionTrue
+		}
+	}
+	return false
 }
