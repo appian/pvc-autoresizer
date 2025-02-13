@@ -33,6 +33,10 @@ controller:
     # Used as "--interval" option
     interval: 10s
 
+    # controller.args.annotationPatchingEnabled -- Automatically patch annotations of STS provisioned PVCs to match volumeClaimTemplates.
+    # Used as "--annotation-patching-enabled" option
+    annotationPatchingEnabled: false
+
     # controller.args.additionalArgs -- Specify additional args.
     additionalArgs: []
 
