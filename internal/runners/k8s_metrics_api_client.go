@@ -57,7 +57,7 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	// use an errgroup to query kubelet for PVC usage on each node
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, node := range nodes.Items {
-		if !IsNodeReady(node) {
+		if IsStatusConditionFalse(node.Status.Conditions, v1.NodeReady) {
 			continue
 		}
 		nodeName := node.Name
@@ -153,13 +153,4 @@ func parseMetric(m *dto.Metric) (pvcName types.NamespacedName, value uint64) {
 	}
 	value = uint64(m.GetGauge().GetValue())
 	return pvcName, value
-}
-
-func IsNodeReady(node v1.Node) bool {
-	for _, condition := range node.Status.Conditions {
-		if condition.Type == v1.NodeReady {
-			return condition.Sttus == v1.ConditionTrue
-		}
-	}
-	return false
 }
