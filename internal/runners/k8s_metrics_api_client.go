@@ -55,15 +55,14 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 		nodeName := node.Name
 		eg.Go(func() error {
 			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
-			if err != nil {
-				continue
+			if err == nil {
+				mu.Lock()
+				defer mu.Unlock()
+				for k, v := range nodePVCUsage {
+					pvcUsage[k] = v
+				}
+				return nil
 			}
-			mu.Lock()
-			defer mu.Unlock()
-			for k, v := range nodePVCUsage {
-				pvcUsage[k] = v
-			}
-			return nil
 		})
 	}
 
