@@ -57,7 +57,7 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	// use an errgroup to query kubelet for PVC usage on each node
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, node := range nodes.Items {
-		if !IsNodeReady(node)
+		if !IsNodeReady(node) {
 			continue
 		}
 		nodeName := node.Name
