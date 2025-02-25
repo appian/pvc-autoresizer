@@ -18,7 +18,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
 func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
 	return &k8sMetricsApiClient{
