@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/kubernetes/pkg/util/node"
 )
 
 const logLevelDebug = 1
@@ -66,7 +67,7 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 		eg.Go(func() error {
 			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
 			if err != nil {
-				k8sMetricsApiClient.log.Error(err, "metricsClient.GetMetrics failed")
+				c.log.Error(err, "metricsClient.GetMetrics failed")
 				return nil
 			}
 			mu.Lock()
