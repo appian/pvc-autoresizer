@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/go-logr/logr"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/topolvm/pvc-autoresizer/internal/metrics"
@@ -16,12 +17,18 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+const logLevelDebug = 1
+const logLevelWarn = 3
+
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
-func NewK8sMetricsApiClient() (MetricsClient, error) {
-	return &k8sMetricsApiClient{}, nil
+func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
+	return &k8sMetricsApiClient{
+		log: log
+	}, nil
 }
 
 type k8sMetricsApiClient struct {
+	log	logr.Logger
 }
 
 func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
@@ -52,15 +59,20 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	// use an errgroup to query kubelet for PVC usage on each node
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, node := range nodes.Items {
+		if !IsNodeReady(node) {
+			continue
+		}
 		nodeName := node.Name
 		eg.Go(func() error {
 			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
-			if err == nil {
-				mu.Lock()
-				defer mu.Unlock()
-				for k, v := range nodePVCUsage {
-					pvcUsage[k] = v
-				}
+			if err != nil {
+				k8sMetricsApiClient.log.Error(err, "metricsClient.GetMetrics failed")
+				return nil
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			for k, v := range nodePVCUsage {
+				pvcUsage[k] = v
 			}
 			return nil
 		})
