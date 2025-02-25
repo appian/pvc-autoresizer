@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/kubernetes/pkg/util/node"
 )
 
 
@@ -154,4 +153,13 @@ func parseMetric(m *dto.Metric) (pvcName types.NamespacedName, value uint64) {
 	}
 	value = uint64(m.GetGauge().GetValue())
 	return pvcName, value
+}
+
+func IsNodeReady(node corev1.Node) bool {
+	for _, condition := range node.Status.Conditions {
+		if condition.Type == corev1.NodeReady {
+			return condition.Sttus == corev1.ConditionTrue
+		}
+	}
+	return false
 }
