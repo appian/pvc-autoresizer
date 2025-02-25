@@ -155,10 +155,10 @@ func parseMetric(m *dto.Metric) (pvcName types.NamespacedName, value uint64) {
 	return pvcName, value
 }
 
-func IsNodeReady(node corev1.Node) bool {
+func IsNodeReady(node v1.Node) bool {
 	for _, condition := range node.Status.Conditions {
-		if condition.Type == corev1.NodeReady {
-			return condition.Sttus == corev1.ConditionTrue
+		if condition.Type == v1.NodeReady {
+			return condition.Sttus == v1.ConditionTrue
 		}
 	}
 	return false
