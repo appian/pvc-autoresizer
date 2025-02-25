@@ -23,7 +23,7 @@ const logLevelWarn = 3
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
 func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
 	return &k8sMetricsApiClient{
-		log: log
+		log: log,
 	}, nil
 }
 
