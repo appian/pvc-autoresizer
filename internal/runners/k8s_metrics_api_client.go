@@ -18,8 +18,6 @@ import (
 	"k8s.io/kubernetes/pkg/util/node"
 )
 
-const logLevelDebug = 1
-const logLevelWarn = 3
 
 // NewK8sMetricsApiClient returns a new k8sMetricsApiClient client
 func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
@@ -60,7 +58,7 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 	// use an errgroup to query kubelet for PVC usage on each node
 	eg, ctx := errgroup.WithContext(ctx)
 	for _, node := range nodes.Items {
-		if !IsNodeReady(node) {
+		if !IsNodeReady(node)
 			continue
 		}
 		nodeName := node.Name
