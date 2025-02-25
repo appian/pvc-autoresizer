@@ -61,8 +61,8 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 				for k, v := range nodePVCUsage {
 					pvcUsage[k] = v
 				}
-				return nil
 			}
+			return nil
 		})
 	}
 
