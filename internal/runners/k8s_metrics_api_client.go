@@ -26,7 +26,7 @@ func NewK8sMetricsApiClient(log logr.Logger) (MetricsClient, error) {
 }
 
 type k8sMetricsApiClient struct {
-	log	logr.Logger
+	log logr.Logger
 }
 
 func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.NamespacedName]*VolumeStats, error) {
