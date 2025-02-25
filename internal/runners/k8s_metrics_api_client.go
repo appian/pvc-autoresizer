@@ -56,7 +56,7 @@ func (c *k8sMetricsApiClient) GetMetrics(ctx context.Context) (map[types.Namespa
 		eg.Go(func() error {
 			nodePVCUsage, err := getPVCUsageFromK8sMetricsAPI(ctx, clientset, nodeName)
 			if err != nil {
-				return err
+				continue
 			}
 			mu.Lock()
 			defer mu.Unlock()
