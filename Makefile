@@ -25,6 +25,12 @@ IMAGE_PREFIX ?= ghcr.io/appian/
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
+PUSH ?= false
+BUILDX_PUSH_OPTIONS := --load
+ifeq ($(PUSH),true)
+BUILDX_PUSH_OPTIONS := --push
+endif
+
 .PHONY: all
 all: build
 
@@ -97,15 +103,20 @@ run: manifests generate ## Run a controller from your host.
 
 .PHONY: image
 image: ## Build docker image.
-	docker build . -t $(IMAGE_PREFIX)pvc-autoresizer:devel
+	docker build -t $(IMAGE_PREFIX)pvc-autoresizer:devel .
+
+.PHONY: multi-platform-image
+multi-platform-image: ## Build multi-platform docker image.
+	docker buildx build --no-cache $(BUILDX_PUSH_OPTIONS) \
+		--platform linux/amd64,linux/arm64 \
+		-t $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG) \
+		.
 
 .PHONY: tag
 tag: ## Set a docker tag to the image.
-	docker tag $(IMAGE_PREFIX)pvc-autoresizer:devel $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
-
-.PHONY: push
-push: ## Push docker image.
-	docker push $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG)
+	docker buildx imagetools create \
+		--tag $(IMAGE_PREFIX)pvc-autoresizer:$(IMAGE_TAG) \
+		$(IMAGE_PREFIX)pvc-autoresizer:$(ORIGINAL_IMAGE_TAG)
 
 ##@ Chart Testing
 
