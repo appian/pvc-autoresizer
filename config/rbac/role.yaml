@@ -24,13 +24,6 @@ rules:
   - update
   - watch
 - apiGroups:
-  - events.k8s.io
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
   - apps
   resources:
   - statefulsets
@@ -38,6 +31,13 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - events.k8s.io
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 - apiGroups:
   - storage.k8s.io
   resources:
